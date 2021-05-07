@@ -42,6 +42,7 @@ from audio_processing import window_sumsquare
 
 class STFT(torch.nn.Module):
     """adapted from Prem Seetharaman's https://github.com/pseeth/pytorch-stft"""
+
     def __init__(self, filter_length=800, hop_length=200, win_length=800,
                  window='hann'):
         super(STFT, self).__init__()
@@ -62,7 +63,7 @@ class STFT(torch.nn.Module):
             np.linalg.pinv(scale * fourier_basis).T[:, None, :])
 
         if window is not None:
-            assert(filter_length >= win_length)
+            assert (filter_length >= win_length)
             # get window and zero center pad it to filter_length
             fft_window = get_window(window, win_length, fftbins=True)
             fft_window = pad_center(fft_window, filter_length)
@@ -89,7 +90,7 @@ class STFT(torch.nn.Module):
                 (int(self.filter_length / 2), int(self.filter_length / 2), 0, 0),
                 mode='reflect')
             input_data = input_data.squeeze(1)
-            
+
             forward_transform = F.conv1d(
                 input_data,
                 self.forward_basis,
@@ -105,22 +106,22 @@ class STFT(torch.nn.Module):
             imag_part = []
             for y in x:
                 y_ = stft(y, self.filter_length, self.hop_length, self.win_length, self.window)
-                real_part.append(y_.real[None,:,:])
-                imag_part.append(y_.imag[None,:,:])
+                real_part.append(y_.real[None, :, :])
+                imag_part.append(y_.imag[None, :, :])
             real_part = np.concatenate(real_part, 0)
             imag_part = np.concatenate(imag_part, 0)
-            
+
             real_part = torch.from_numpy(real_part).to(input_data.dtype)
             imag_part = torch.from_numpy(imag_part).to(input_data.dtype)
 
-        magnitude = torch.sqrt(real_part**2 + imag_part**2)
+        magnitude = torch.sqrt(real_part ** 2 + imag_part ** 2)
         phase = torch.atan2(imag_part.data, real_part.data)
 
         return magnitude, phase
 
     def inverse(self, magnitude, phase):
         recombine_magnitude_phase = torch.cat(
-            [magnitude*torch.cos(phase), magnitude*torch.sin(phase)], dim=1)
+            [magnitude * torch.cos(phase), magnitude * torch.sin(phase)], dim=1)
 
         if magnitude.device.type == "cuda":
             inverse_transform = F.conv_transpose1d(
@@ -143,19 +144,19 @@ class STFT(torch.nn.Module):
                 # scale by hop ratio
                 inverse_transform *= float(self.filter_length) / self.hop_length
 
-            inverse_transform = inverse_transform[:, :, int(self.filter_length/2):]
-            inverse_transform = inverse_transform[:, :, :-int(self.filter_length/2):]
+            inverse_transform = inverse_transform[:, :, int(self.filter_length / 2):]
+            inverse_transform = inverse_transform[:, :, :-int(self.filter_length / 2):]
             inverse_transform = inverse_transform.squeeze(1)
         else:
             x_org = recombine_magnitude_phase.detach().numpy()
             n_b, n_f, n_t = x_org.shape
-            x = np.empty([n_b, n_f//2, n_t], dtype=np.complex64)
-            x.real = x_org[:,:n_f//2]
-            x.imag = x_org[:,n_f//2:]
+            x = np.empty([n_b, n_f // 2, n_t], dtype=np.complex64)
+            x.real = x_org[:, :n_f // 2]
+            x.imag = x_org[:, n_f // 2:]
             inverse_transform = []
             for y in x:
                 y_ = istft(y, self.hop_length, self.win_length, self.window)
-                inverse_transform.append(y_[None,:])
+                inverse_transform.append(y_[None, :])
             inverse_transform = np.concatenate(inverse_transform, 0)
             inverse_transform = torch.from_numpy(inverse_transform).to(recombine_magnitude_phase.dtype)
 

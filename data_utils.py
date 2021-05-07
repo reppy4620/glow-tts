@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.utils.data
 
-import commons 
+import commons
 from utils import load_wav_to_torch, load_filepaths_and_text
 from text import text_to_sequence, cmudict
 from text.symbols import symbols
@@ -15,6 +15,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         2) normalizes text and converts them to sequences of one-hot vectors
         3) computes mel-spectrograms from audio files.
     """
+
     def __init__(self, audiopaths_and_text, hparams):
         self.audiopaths_and_text = load_filepaths_and_text(audiopaths_and_text)
         self.text_cleaners = hparams.text_cleaners
@@ -22,9 +23,9 @@ class TextMelLoader(torch.utils.data.Dataset):
         self.sampling_rate = hparams.sampling_rate
         self.load_mel_from_disk = hparams.load_mel_from_disk
         self.add_noise = hparams.add_noise
-        self.add_blank = getattr(hparams, "add_blank", False) # improved version
+        self.add_blank = getattr(hparams, "add_blank", False)  # improved version
         if getattr(hparams, "cmudict_path", None) is not None:
-          self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
+            self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
         self.stft = commons.TacotronSTFT(
             hparams.filter_length, hparams.hop_length, hparams.win_length,
             hparams.n_mel_channels, hparams.sampling_rate, hparams.mel_fmin,
@@ -62,7 +63,8 @@ class TextMelLoader(torch.utils.data.Dataset):
     def get_text(self, text):
         text_norm = text_to_sequence(text, self.text_cleaners, getattr(self, "cmudict", None))
         if self.add_blank:
-            text_norm = commons.intersperse(text_norm, len(symbols)) # add a blank token, whose id number is len(symbols)
+            text_norm = commons.intersperse(text_norm,
+                                            len(symbols))  # add a blank token, whose id number is len(symbols)
         text_norm = torch.IntTensor(text_norm)
         return text_norm
 
@@ -76,6 +78,7 @@ class TextMelLoader(torch.utils.data.Dataset):
 class TextMelCollate():
     """ Zero-pads model inputs and targets based on number of frames per step
     """
+
     def __init__(self, n_frames_per_step=1):
         self.n_frames_per_step = n_frames_per_step
 
@@ -117,12 +120,15 @@ class TextMelCollate():
 
 
 """Multi speaker version"""
+
+
 class TextMelSpeakerLoader(torch.utils.data.Dataset):
     """
         1) loads audio, speaker_id, text pairs
         2) normalizes text and converts them to sequences of one-hot vectors
         3) computes mel-spectrograms from audio files.
     """
+
     def __init__(self, audiopaths_sid_text, hparams):
         self.audiopaths_sid_text = load_filepaths_and_text(audiopaths_sid_text)
         self.text_cleaners = hparams.text_cleaners
@@ -130,11 +136,11 @@ class TextMelSpeakerLoader(torch.utils.data.Dataset):
         self.sampling_rate = hparams.sampling_rate
         self.load_mel_from_disk = hparams.load_mel_from_disk
         self.add_noise = hparams.add_noise
-        self.add_blank = getattr(hparams, "add_blank", False) # improved version
+        self.add_blank = getattr(hparams, "add_blank", False)  # improved version
         self.min_text_len = getattr(hparams, "min_text_len", 1)
         self.max_text_len = getattr(hparams, "max_text_len", 190)
         if getattr(hparams, "cmudict_path", None) is not None:
-          self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
+            self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
         self.stft = commons.TacotronSTFT(
             hparams.filter_length, hparams.hop_length, hparams.win_length,
             hparams.n_mel_channels, hparams.sampling_rate, hparams.mel_fmin,
@@ -145,11 +151,11 @@ class TextMelSpeakerLoader(torch.utils.data.Dataset):
         random.shuffle(self.audiopaths_sid_text)
 
     def _filter_text_len(self):
-      audiopaths_sid_text_new = []
-      for audiopath, sid, text in self.audiopaths_sid_text:
-        if self.min_text_len <= len(text) and len(text) <= self.max_text_len:
-          audiopaths_sid_text_new.append([audiopath, sid, text])
-      self.audiopaths_sid_text = audiopaths_sid_text_new
+        audiopaths_sid_text_new = []
+        for audiopath, sid, text in self.audiopaths_sid_text:
+            if self.min_text_len <= len(text) and len(text) <= self.max_text_len:
+                audiopaths_sid_text_new.append([audiopath, sid, text])
+        self.audiopaths_sid_text = audiopaths_sid_text_new
 
     def get_mel_text_speaker_pair(self, audiopath_sid_text):
         # separate filename, speaker_id and text
@@ -182,7 +188,8 @@ class TextMelSpeakerLoader(torch.utils.data.Dataset):
     def get_text(self, text):
         text_norm = text_to_sequence(text, self.text_cleaners, getattr(self, "cmudict", None))
         if self.add_blank:
-            text_norm = commons.intersperse(text_norm, len(symbols)) # add a blank token, whose id number is len(symbols)
+            text_norm = commons.intersperse(text_norm,
+                                            len(symbols))  # add a blank token, whose id number is len(symbols)
         text_norm = torch.IntTensor(text_norm)
         return text_norm
 
@@ -200,6 +207,7 @@ class TextMelSpeakerLoader(torch.utils.data.Dataset):
 class TextMelSpeakerCollate():
     """ Zero-pads model inputs and targets based on number of frames per step
     """
+
     def __init__(self, n_frames_per_step=1):
         self.n_frames_per_step = n_frames_per_step
 
