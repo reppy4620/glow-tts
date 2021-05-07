@@ -8,7 +8,10 @@ class Tokenizer:
     def load_dictionary(self, path):
         with open(path, 'r') as f:
             lines = f.readlines()
-        return [w.strip() for w in lines]
+        dictionary = dict()
+        for i, w in enumerate([w.strip() for w in lines]):
+            dictionary[w] = i
+        return dictionary
 
     def __len__(self):
         return len(self.dictionary)

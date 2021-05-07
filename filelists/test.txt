@@ -1,0 +1,10 @@
+DUMMY/wav/BASIC5000_4991.wav|s-a-i-k-i-N-pau-k-i-b-u-N-g-a-n-a-e-g-i-m-i-d-a
+DUMMY/wav/BASIC5000_4992.wav|k-o-m-u-s-o-o-g-a-t-a-k-u-h-a-ts-u-sh-i-t-e-i-r-u-y-o-o-s-u-o-n-a-g-a-m-e-r-u
+DUMMY/wav/BASIC5000_4993.wav|i-a-N-ry-o-k-o-o-o-pau-a-sh-i-t-a-n-i-h-i-k-a-e-r-u
+DUMMY/wav/BASIC5000_4994.wav|ts-u-k-a-cl-t-e-i-k-u-u-ch-i-n-i-pau-ts-u-y-a-g-a-d-e-r-u
+DUMMY/wav/BASIC5000_4995.wav|d-a-N-g-a-i-s-a-i-b-a-N-g-a-h-i-r-a-k-a-r-e-r-u
+DUMMY/wav/BASIC5000_4996.wav|o-o-g-i-g-a-t-a-n-o-pau-k-o-n-o-n-a-g-a-s-a-o-pau-k-e-e-s-a-N-d-e-m-o-t-o-m-e-r-u
+DUMMY/wav/BASIC5000_4997.wav|s-o-n-o-o-o-k-o-k-u-w-a-pau-s-a-i-g-o-n-o-o-o-n-i-sh-i-sh-i-g-a-o-r-a-z-u-pau-m-e-ts-u-b-o-o-sh-i-t-a
+DUMMY/wav/BASIC5000_4998.wav|m-u-r-a-b-i-t-o-t-a-ch-i-w-a-pau-s-o-n-o-h-a-n-a-sh-i-o-k-i-i-t-e-pau-f-u-r-u-e-a-g-a-cl-t-a
+DUMMY/wav/BASIC5000_4999.wav|d-o-n-a-a-k-a-r-a-j-i-N-z-o-o-n-o-t-e-e-ky-o-o-o-u-k-e-r-u
+DUMMY/wav/BASIC5000_5000.wav|a-t-o-s-a-N-j-u-cl-p-u-N-n-o-y-u-u-y-o-g-a-a-t-a-e-r-a-r-e-t-a
