@@ -28,7 +28,7 @@
     "mel_fmax": 8000.0,
     "add_noise": true,
     "add_blank": true,
-    "cmudict_path": "data/cmu_dictionary"
+    "word_index_path": "data/word_index.txt"
   },
   "model": {
     "hidden_channels": 192,
