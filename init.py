@@ -1,17 +1,13 @@
 import os
-import json
-import argparse
-import math
+
 import torch
-from torch import nn, optim
-from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from data_utils import TextMelLoader, TextMelCollate
-import models
 import commons
+import models
 import utils
-from text.symbols import symbols
+from data_utils import TextMelLoader, TextMelCollate
+from text_jp import Tokenizer
 
 
 class FlowGenerator_DDI(models.FlowGenerator):
@@ -37,9 +33,10 @@ def main():
     train_loader = DataLoader(train_dataset, num_workers=8, shuffle=True,
                               batch_size=hps.train.batch_size, pin_memory=True,
                               drop_last=True, collate_fn=collate_fn)
+    tokenizer = Tokenizer(hps.data.word_index_path)
 
     generator = FlowGenerator_DDI(
-        len(symbols) + getattr(hps.data, "add_blank", False),
+        len(tokenizer) + getattr(hps.data, "add_blank", False),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda()
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,

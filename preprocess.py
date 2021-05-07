@@ -21,7 +21,7 @@ def preprocess(dataset_dir, output_dir):
     out_dir = output_dir / 'wav'
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    fns = list(dataset_dir.glob('*.wav'))[:100]
+    fns = list(dataset_dir.glob('*.wav'))
     resample = torchaudio.transforms.Resample(48000, 22050)
     Parallel(n_jobs=-1)(
         delayed(process_file)(fn, resample, out_dir) for fn in tqdm(fns, total=len(fns))
