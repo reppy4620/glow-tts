@@ -8,10 +8,6 @@ pip install unidecode mecab-python3==0.996.2 unidic jaconv zenhan pykakasi torch
 git clone --recursive https://github.com/NVIDIA/apex.git
 pip install apex
 
-# clone glow-tts
-git clone https://github.com/reppy4620/glow-tts.git --recursive
-cd glow-tts
-
 # preprocess wav files and text
 if [ $# -ne 0 ]; then
   python preprocess.py --dataset_dir /content/drive/MyDrive/dataset/jsut/basic5000/wav \
