@@ -9,8 +9,8 @@ git clone --recursive https://github.com/NVIDIA/apex.git
 pip install apex
 
 # preprocess wav files and text
-if [ $# -ne 0 ]; then
-  python preprocess.py --dataset_dir /content/drive/MyDrive/dataset/jsut/basic5000/wav \
+if [ $# != 0 ]; then
+  python preprocess.py --wav_dir /content/drive/MyDrive/dataset/jsut/basic5000/wav \
                        --wav_output_dir /content/drive/MyDrive/dataset/jsut/processed \
                        --text_file_path ./filelists/basic5000.yaml \
                        --text_output_dir ./filelists
