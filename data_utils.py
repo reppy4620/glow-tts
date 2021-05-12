@@ -5,7 +5,7 @@ import torch.utils.data
 
 import commons
 from utils import load_wav_to_torch, load_filepaths_and_text
-from text_jp import Tokenizer
+from text_jp import TextCleaner
 
 
 class TextMelLoader(torch.utils.data.Dataset):
@@ -23,7 +23,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         self.load_mel_from_disk = hparams.load_mel_from_disk
         self.add_noise = hparams.add_noise
         self.add_blank = getattr(hparams, "add_blank", False)  # improved version
-        self.tokenizer = Tokenizer(hparams.word_index_path)
+        self.cleaner = TextCleaner()
         # if getattr(hparams, "cmudict_path", None) is not None:
         #     self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
         self.stft = commons.TacotronSTFT(
@@ -61,7 +61,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         return melspec
 
     def get_text(self, text):
-        text_norm = self.tokenizer.tokenize(text)
+        text_norm = self.cleaner(text)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm,
                                             len(self.tokenizer))  # add a blank token, whose id number is len(symbols)
