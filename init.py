@@ -7,7 +7,7 @@ import commons
 import models
 import utils
 from data_utils import TextMelLoader, TextMelCollate
-from text_jp import Tokenizer
+from text_jp import TextCleaner
 
 
 class FlowGenerator_DDI(models.FlowGenerator):
@@ -33,10 +33,10 @@ def main():
     train_loader = DataLoader(train_dataset, num_workers=8, shuffle=True,
                               batch_size=hps.train.batch_size, pin_memory=True,
                               drop_last=True, collate_fn=collate_fn)
-    tokenizer = Tokenizer(hps.data.word_index_path)
+    cleaner = TextCleaner()
 
     generator = FlowGenerator_DDI(
-        len(tokenizer) + getattr(hps.data, "add_blank", False),
+        len(cleaner) + getattr(hps.data, "add_blank", False),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda()
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,

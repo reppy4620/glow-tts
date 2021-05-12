@@ -64,7 +64,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         text_norm = self.cleaner(text)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm,
-                                            len(self.tokenizer))  # add a blank token, whose id number is len(symbols)
+                                            len(self.cleaner))  # add a blank token, whose id number is len(symbols)
         text_norm = torch.IntTensor(text_norm)
         return text_norm
 

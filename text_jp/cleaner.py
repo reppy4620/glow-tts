@@ -20,6 +20,9 @@ class TextCleaner:
                 print(char)
         return indexes
 
+    def __len__(self):
+        return len(self.word_index_dictionary)
+
     def load_dictionary(self, path):
         csv = pd.read_csv(path, header=None).values
         word_index_dict = {word: index for word, index in csv}
