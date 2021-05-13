@@ -12,7 +12,7 @@ import commons
 import models
 import utils
 from data_utils import TextMelLoader, TextMelCollate
-from text_jp import Tokenizer
+from text_jp import TextCleaner
 
 global_step = 0
 
@@ -58,10 +58,10 @@ def train_and_eval(rank, n_gpus, hps):
                                 batch_size=hps.train.batch_size, pin_memory=True,
                                 drop_last=True, collate_fn=collate_fn)
 
-    tokenizer = Tokenizer(hps.data.word_index_path)
+    cleaner = TextCleaner()
 
     generator = models.FlowGenerator(
-        n_vocab=len(tokenizer) + getattr(hps.data, "add_blank", False),
+        n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda(rank)
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,

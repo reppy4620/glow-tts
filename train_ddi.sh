@@ -5,8 +5,10 @@ apt-get install -y swig mecab libmecab-dev mecab-ipadic-utf8 git make curl xz-ut
 pip install unidecode mecab-python3==0.996.2 unidic jaconv zenhan pykakasi torchaudio
 
 # install apex
+cd apex
 git clone --recursive https://github.com/NVIDIA/apex.git
-pip install apex
+pip install .
+cd ..
 
 # preprocess wav files and text
 if [ $# != 0 ]; then
@@ -14,7 +16,7 @@ if [ $# != 0 ]; then
                        --wav_output_dir /content/drive/MyDrive/dataset/jsut/processed \
                        --text_file_path ./filelists/basic5000.yaml \
                        --text_output_dir ./filelists
-  ln -s /content/drive/MyDrive/dataset/jsut/processed DUMMY
+  ln -s /content/drive/MyDrive/dataset/jsut/processed/wav DUMMY
 fi
 
 # build cython script
