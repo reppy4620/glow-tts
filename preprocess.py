@@ -8,8 +8,6 @@ from joblib import Parallel, delayed
 
 import torchaudio
 
-from text_jp.convert import text2hiragana, hiragana2onso
-
 warnings.simplefilter('ignore')
 warnings.filterwarnings('ignore')
 
@@ -40,15 +38,14 @@ class AudioProcessor(PreProcessor):
 
 class TextProcessor(PreProcessor):
     def __init__(self, data_path, output_dir):
-        with open(data_path, 'r') as f:
+        with open(data_path, 'r', encoding='utf-8') as f:
             self.labels = yaml.safe_load(f)
         self.output_dir = Path(output_dir)
 
     def preprocess(self):
         data = OrderedDict()
         for k, v in tqdm(self.labels.items(), total=len(self.labels)):
-            text = v['text_level2']
-            phoneme = hiragana2onso(text2hiragana(text)).strip()
+            phoneme = v['phone_level3']
             data[f'DUMMY/{k}.wav'] = phoneme
         assert len(data) == 5000
         keys = list(data.keys())
@@ -68,8 +65,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--wav_dir', type=str, required=True)
     parser.add_argument('--wav_output_dir', type=str, required=True)
-    parser.add_argument('--text_file_path', type=str, required=True, default='./filelists/basic5000.yaml')
-    parser.add_argument('--text_output_dir', type=str, required=True, default='./filelists')
+    parser.add_argument('--text_file_path', type=str, default='./filelists/basic5000.yaml')
+    parser.add_argument('--text_output_dir', type=str, default='./filelists')
     args = parser.parse_args()
 
     ap = AudioProcessor(args.wav_dir, args.wav_output_dir)

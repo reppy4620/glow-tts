@@ -7,7 +7,7 @@ import commons
 import models
 import utils
 from data_utils import TextMelLoader, TextMelCollate
-from text_jp import TextCleaner
+from text_jp.tokenizer import Tokenizer
 
 
 class FlowGenerator_DDI(models.FlowGenerator):
@@ -33,7 +33,7 @@ def main():
     train_loader = DataLoader(train_dataset, num_workers=8, shuffle=True,
                               batch_size=hps.train.batch_size, pin_memory=True,
                               drop_last=True, collate_fn=collate_fn)
-    cleaner = TextCleaner()
+    cleaner = Tokenizer()
 
     generator = FlowGenerator_DDI(
         len(cleaner) + getattr(hps.data, "add_blank", False),
