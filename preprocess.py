@@ -46,7 +46,7 @@ class TextProcessor(PreProcessor):
 
     def preprocess(self):
         data = OrderedDict()
-        for k, v in tqdm(self.labels, total=len(self.labels)):
+        for k, v in tqdm(self.labels.items(), total=len(self.labels)):
             text = v['text_level2']
             phoneme = hiragana2onso(text2hiragana(text))
             data[f'DUMMY/{k}.wav'] = phoneme
