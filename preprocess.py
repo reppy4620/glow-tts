@@ -52,9 +52,9 @@ class TextProcessor(PreProcessor):
             data[f'DUMMY/{k}.wav'] = phoneme
         assert len(data) == 5000
         keys = list(data.keys())
-        train = [f'{k}:{data[k]}\n' for k in keys[:4900]]
-        valid = [f'{k}:{data[k]}\n' for k in keys[4900:4990]]
-        test = [f'{k}:{data[k]}\n' for k in keys[4990:]]
+        train = [f'{k}|{data[k]}\n' for k in keys[:4900]]
+        valid = [f'{k}|{data[k]}\n' for k in keys[4900:4990]]
+        test = [f'{k}|{data[k]}\n' for k in keys[4990:]]
         with open(self.output_dir / 'train.txt', 'w', encoding='utf-8') as f:
             f.writelines(train)
         with open(self.output_dir / 'valid.txt', 'w', encoding='utf-8') as f:
