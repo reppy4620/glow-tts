@@ -5,8 +5,8 @@ apt-get install -y swig mecab libmecab-dev mecab-ipadic-utf8 git make curl xz-ut
 pip install unidecode mecab-python3==0.996.2 unidic jaconv zenhan pykakasi torchaudio
 
 # install apex
-cd apex
 git clone --recursive https://github.com/NVIDIA/apex.git
+cd apex
 pip install .
 cd ..
 

@@ -30,7 +30,7 @@ class AudioProcessor(PreProcessor):
     def process_file(self, fn):
         wav, sr = torchaudio.load(fn)
         wav = self.resample(wav)
-        torchaudio.save(str(self.output_dir / fn.name), wav, self.resample.new_freq)
+        torchaudio.save(str(self.output_dir / fn.name), wav, self.resample.new_freq, encoding='PCM_S', bits_per_sample=16)
 
     def preprocess(self):
         Parallel(n_jobs=-1)(
@@ -48,7 +48,7 @@ class TextProcessor(PreProcessor):
         data = OrderedDict()
         for k, v in tqdm(self.labels.items(), total=len(self.labels)):
             text = v['text_level2']
-            phoneme = hiragana2onso(text2hiragana(text))
+            phoneme = hiragana2onso(text2hiragana(text)).strip()
             data[f'DUMMY/{k}.wav'] = phoneme
         assert len(data) == 5000
         keys = list(data.keys())
