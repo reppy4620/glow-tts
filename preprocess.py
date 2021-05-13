@@ -48,15 +48,19 @@ class TextProcessor(PreProcessor):
         data = OrderedDict()
         for k, v in tqdm(self.labels.items(), total=len(self.labels)):
             text = v['text_level2']
-            phoneme = hiragana2onso(text2hiragana(text))
+            phoneme = text
             data[f'DUMMY/{k}.wav'] = phoneme
         assert len(data) == 5000
-        with open(self.output_dir / 'train.txt', 'w') as f:
-            f.writelines(data[:4900])
-        with open(self.output_dir / 'valid.txt', 'w') as f:
-            f.writelines(data[4900:4990])
-        with open(self.output_dir / 'test.txt', 'w') as f:
-            f.writelines(data[4990:])
+        keys = list(data.keys())
+        train = [f'{k}:{data[k]}\n' for k in keys[:4900]]
+        valid = [f'{k}:{data[k]}\n' for k in keys[4900:4990]]
+        test = [f'{k}:{data[k]}\n' for k in keys[4990:]]
+        with open(self.output_dir / 'train.txt', 'w', encoding='utf-8') as f:
+            f.writelines(train)
+        with open(self.output_dir / 'valid.txt', 'w', encoding='utf-8') as f:
+            f.writelines(valid)
+        with open(self.output_dir / 'test.txt', 'w', encoding='utf-8') as f:
+            f.writelines(test)
 
 
 if __name__ == '__main__':
