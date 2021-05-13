@@ -48,7 +48,7 @@ class TextProcessor(PreProcessor):
         data = OrderedDict()
         for k, v in tqdm(self.labels.items(), total=len(self.labels)):
             text = v['text_level2']
-            phoneme = text
+            phoneme = hiragana2onso(text2hiragana(text))
             data[f'DUMMY/{k}.wav'] = phoneme
         assert len(data) == 5000
         keys = list(data.keys())
