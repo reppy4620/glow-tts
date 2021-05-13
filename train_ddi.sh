@@ -16,8 +16,8 @@ if [ $# != 0 ]; then
                        --wav_output_dir /content/drive/MyDrive/dataset/jsut/processed \
                        --text_file_path ./filelists/basic5000.yaml \
                        --text_output_dir ./filelists
-  ln -s /content/drive/MyDrive/dataset/jsut/processed/wav DUMMY
 fi
+ln -s /content/drive/MyDrive/dataset/jsut/processed/wav DUMMY
 
 # build cython script
 cd monotonic_align
