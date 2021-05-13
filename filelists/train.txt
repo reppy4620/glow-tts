@@ -1,0 +1,90 @@
+DUMMY/BASIC5000_4901.wav|kanojowawatasiomiruyainaya waqtonakidasita..
+DUMMY/BASIC5000_4902.wav|kanojowasyamiseNniyoru atarasiijazunoeNsouhouohajimeta..
+DUMMY/BASIC5000_4903.wav|kanojowaitumo yukaokireinihaiteimasu..
+DUMMY/BASIC5000_4904.wav|kanojonoobawa icinicicuu karenoinunosewaosuru..
+DUMMY/BASIC5000_4905.wav|kanojonoiukotowa matohazuredearu..
+DUMMY/BASIC5000_4906.wav|kanojogakorehodojibuNgaqtenanowanagekawasii..
+DUMMY/BASIC5000_4907.wav|karewa cimitunitatetakeikakuojiqkousita..
+DUMMY/BASIC5000_4908.wav|karewafuketemieru..
+DUMMY/BASIC5000_4909.wav|karewa taiiijounomonoozeNiNsyousyuusita..
+DUMMY/BASIC5000_4910.wav|karewa siqpoomaitenigeta..
+DUMMY/BASIC5000_4911.wav|karewa juudainasimeiomakasareta..
+DUMMY/BASIC5000_4912.wav|karewa nijuuseikisaikounopianisutodatoiqte sasitukaenaidesyou..
+DUMMY/BASIC5000_4913.wav|karewakuroutonicikai..
+DUMMY/BASIC5000_4914.wav|karewa keqkoNnitaisiteniekiranaitaidootoruno..
+DUMMY/BASIC5000_4915.wav|karewa kyousouaiteootosiireyouto kositaNtaNtositeiru..
+DUMMY/BASIC5000_4916.wav|karewa okaokorogeruyouniyaqtekita..
+DUMMY/BASIC5000_4917.wav|karewa yogiqteoyayubio kanazucideucituketa..
+DUMMY/BASIC5000_4918.wav|karewa idoonomihosuhodo nodogakawaiteita..
+DUMMY/BASIC5000_4919.wav|karewa totemosonosigotogatutomaranakaqta..
+DUMMY/BASIC5000_4920.wav|karewa sonohanasiokiitegyouteNsita..
+DUMMY/BASIC5000_4921.wav|karewarokutukinitoukyouohanarete kaNsainikuru..
+DUMMY/BASIC5000_4922.wav|karegakebyouotukaqtanowa akirakada..
+DUMMY/BASIC5000_4923.wav|kare kyou seisaiganaine aonanisiodane..
+DUMMY/BASIC5000_4924.wav|noumunotame karenomaeoaruiteikuotokonosugataga yagatemienakunaqta..
+DUMMY/BASIC5000_4925.wav|ubagurumadenemuqteiruakacaNwa teNsinoyounikawaii..
+DUMMY/BASIC5000_4926.wav|niqpoNwa yoqtunoomonasimakaranaritaqteiru..
+DUMMY/BASIC5000_4927.wav|niqpoNnosaikouhouwa fujisaNdearu..
+DUMMY/BASIC5000_4928.wav|niqpoNnousiwa kouhaNinisimofurigaaru..
+DUMMY/BASIC5000_4929.wav|nisouwa oinoriositejuujiokiqta..
+DUMMY/BASIC5000_4930.wav|futatunotatemonowatonariaqteiru..
+DUMMY/BASIC5000_4931.wav|totuzeNnokarenofuhouwa watasioodorokaseta..
+DUMMY/BASIC5000_4932.wav|toukyouniwa syuuakunatatemonogatakusaNmirareru..
+DUMMY/BASIC5000_4933.wav|teNsaiwa icipa:seNtogareikaNdeari kyuujuukyuupa:seNtowasyoujiNdearu..
+DUMMY/BASIC5000_4934.wav|dorobounakamanimo jiNgigaaru..
+DUMMY/BASIC5000_4935.wav|niwaniwa baranohanagakaoqteiru..
+DUMMY/BASIC5000_4936.wav|tubasawaryouyokuohirogeta..
+DUMMY/BASIC5000_4937.wav|naganeNnosyuukaNwa nakanakaaratamaranai..
+DUMMY/BASIC5000_4938.wav|cuugokudewa kyuurekinisitagaqte syougatuoiwau..
+DUMMY/BASIC5000_4939.wav|atatakaiteNkounotokiwa haqkaNsayougataioNnocousetuosuruuede yakudatu..
+DUMMY/BASIC5000_4940.wav|daitouryouseNkyodedaregakatudearoukato subetenohitobitoga katazuonoNdemimamoqta..
+DUMMY/BASIC5000_4941.wav|mateba kairono hiyoriari..
+DUMMY/BASIC5000_4942.wav|ookunowakoudogasonoseNsoucuu miNsyusyuginotamenisiNda..
+DUMMY/BASIC5000_4943.wav|yokikyousininarutameniwa jibuNnoseitotacigamoqteirunouryokuosaidaigeNikasiteyarukotoosiranakerebanaranai..
+DUMMY/BASIC5000_4944.wav|nadarededourogafusagaqta..
+DUMMY/BASIC5000_4945.wav|aojiroikarenokaoga koufuNdeakaraNda..
+DUMMY/BASIC5000_4946.wav|morinocikakuni iqkeNyagaaru..
+DUMMY/BASIC5000_4947.wav|syokujinosaicuuni yobiriNganaqta..
+DUMMY/BASIC5000_4948.wav|atusamosamusamohigaNmade..
+DUMMY/BASIC5000_4949.wav|haruninareba hanagaamakusakiniou..
+DUMMY/BASIC5000_4950.wav|akikazegatacisomeru..
+DUMMY/BASIC5000_4951.wav|wakaihitotaciwa seNkatoiumonoo atamadesikasiranai..
+DUMMY/BASIC5000_4952.wav|teNnouwa zaiicuuwa kiNjouteNnoutoyobu..
+DUMMY/BASIC5000_4953.wav|tokigatatuniturete kanasimiwausuragu..
+DUMMY/BASIC5000_4954.wav|watasiwareiseideiyoutositaga toutoukaNniNbukuronoitogucigakireta..
+DUMMY/BASIC5000_4955.wav|watasiwa yaoyanosotodekarenideaqta..
+DUMMY/BASIC5000_4956.wav|watasiniwa karenousogamiyaburenakaqta..
+DUMMY/BASIC5000_4957.wav|watasitaciwa kawasimoniaruhasiowataqte mawarimiciosinakerebanaranakaqta..
+DUMMY/BASIC5000_4958.wav|watasitaciwa gifuniiqta..
+DUMMY/BASIC5000_4959.wav|sisoNnikireina midorinocikyuuonokositai..
+DUMMY/BASIC5000_4960.wav|saisitabyou kajiNhakumei..
+DUMMY/BASIC5000_4961.wav|kesaokitemiruto yamanoitadakiga yukinioowareteita..
+DUMMY/BASIC5000_4962.wav|minatoomiorosuhakani bohiotateta..
+DUMMY/BASIC5000_4963.wav|konotokorohiderituzukide ikenomizumohirukanouseigadetekita..
+DUMMY/BASIC5000_4964.wav|keNkaositeitaniniNnokodomowa otagainisikameqturaositesuwaqteita..
+DUMMY/BASIC5000_4965.wav|kiminoiqteirukotowakijounokuuroNnisuginaiyo..
+DUMMY/BASIC5000_4966.wav|warewarenoci:muwa kyouryokunaraibarutokisoqta..
+DUMMY/BASIC5000_4967.wav|amegafuruto kanarazuyanekaraamamizugamoru..
+DUMMY/BASIC5000_4968.wav|icigeNkoji..
+DUMMY/BASIC5000_4969.wav|moqtotaNtoucokunyuuniiqtekurenaikana kaqkasouyounokaNnakinisimoarazudayo..
+DUMMY/BASIC5000_4970.wav|pa:maokaketanode kaminokegacijireteimasu..
+DUMMY/BASIC5000_4971.wav|dokodehoukaodorunikaerareruka..
+DUMMY/BASIC5000_4972.wav|toutoukodomotaciwayamanomaNnakani riNgonokigauwaqteiru ciisanakajueNomitukemasita..
+DUMMY/BASIC5000_4973.wav|tabakodekemuqtakuukioheyakaradasite siNseNnakuukioiretecoudai..
+DUMMY/BASIC5000_4974.wav|soregaitudaqtaka hiokuqtetasikameta..
+DUMMY/BASIC5000_4975.wav|sonoyoruwarewarewa daiebinisitatuzumiouqta..
+DUMMY/BASIC5000_4976.wav|sonosiNbuNwa karenohaNzaienokakariaiosyucousita..
+DUMMY/BASIC5000_4977.wav|sonosiharaiwa nineNkaNkurinoberareru..
+DUMMY/BASIC5000_4978.wav|sonoyamao watasitaciwakeNdaketoyobu..
+DUMMY/BASIC5000_4979.wav|sonokunidewa niqpoNseihiNohaisekisuruuNdougaokoqteita..
+DUMMY/BASIC5000_4980.wav|sonobo:towa hatobanitunagareteita..
+DUMMY/BASIC5000_4981.wav|konohoNwa kyoumisiNsiNtarumonogaaqteakinai..
+DUMMY/BASIC5000_4982.wav|konokawaniwa jakogatakusaNiru..
+DUMMY/BASIC5000_4983.wav|konosukyaNdarude icibunokoukaNga himeNsarerukanouseigaaru..
+DUMMY/BASIC5000_4984.wav|kokoekuruto itumokokorogayasumarimasu..
+DUMMY/BASIC5000_4985.wav|kare:noru:wa hijounijiyounitoNdeiru..
+DUMMY/BASIC5000_4986.wav|jibuNyounobeqdoninekasareru..
+DUMMY/BASIC5000_4987.wav|anatanokifuwa syounibyouiNokeNsetusuruhojotosite ooiniyakudatudesyou..
+DUMMY/BASIC5000_4988.wav|aiturayoituburecaqta..
+DUMMY/BASIC5000_4989.wav|kobayasiisamuwa siawaseda..
+DUMMY/BASIC5000_4990.wav|ikujiga nakaqtaNda..
