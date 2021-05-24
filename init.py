@@ -36,8 +36,8 @@ def main():
     cleaner = Tokenizer()
 
     generator = FlowGenerator_DDI(
-        len(cleaner) + getattr(hps.data, "add_blank", False),
-        hps.data.n_accent,
+        n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
+        n_accent=hps.data.n_accent,
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda()
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
@@ -45,11 +45,12 @@ def main():
                                lr=hps.train.learning_rate, betas=hps.train.betas, eps=hps.train.eps)
 
     generator.train()
-    for batch_idx, (x, x_lengths, y, y_lengths) in enumerate(train_loader):
+    for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(train_loader):
         x, x_lengths = x.cuda(), x_lengths.cuda()
         y, y_lengths = y.cuda(), y_lengths.cuda()
+        a1, f2 = a1.cuda(), f2.cuda()
 
-        _ = generator(x, x_lengths, y, y_lengths, gen=False)
+        _ = generator(x, x_lengths, a1, f2, y, y_lengths, gen=False)
         break
 
     utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, 0, os.path.join(hps.model_dir, "ddi_G.pth"))

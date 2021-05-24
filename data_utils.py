@@ -36,9 +36,9 @@ class TextMelLoader(torch.utils.data.Dataset):
     def get_mel_text_pair(self, audiopath_and_text):
         # separate filename and text
         audiopath, *text = audiopath_and_text
-        text = self.get_text(text)
+        text, a1, f2 = self.get_text(text)
         mel = self.get_mel(audiopath)
-        return text, mel
+        return text, mel, a1, f2
 
     def get_mel(self, filename):
         if not self.load_mel_from_disk:
@@ -88,25 +88,29 @@ class TextMelCollate():
         """Collate's training batch from normalized text and mel-spectrogram
         PARAMS
         ------
-        batch: [text_normalized, mel_normalized, a2s, f2s]
+        batch: [text_normalized, mel_normalized, a1s, f2s]
         """
+        text, mel, a1, f2 = tuple(zip(*batch))
         # Right zero-pad all one-hot text sequences to max input length
         input_lengths, ids_sorted_decreasing = torch.sort(
-            torch.LongTensor([len(x[0]) for x in batch]),
+            torch.LongTensor([len(x) for x in text]),
             dim=0, descending=True)
         max_input_len = input_lengths[0]
 
-        text_padded = torch.zeros(len(batch), max_input_len)
-        f2s_padded = torch.zeros(len(batch), max_input_len)
+        text_padded = torch.zeros(len(batch), max_input_len, dtype=torch.long)
+        f2s_padded = torch.zeros(len(batch), max_input_len, dtype=torch.long)
+        a1s_padded = torch.zeros(len(batch), max_input_len, dtype=torch.float)
         for i in range(len(ids_sorted_decreasing)):
-            text = batch[ids_sorted_decreasing[i]][0]
-            f2 = batch[ids_sorted_decreasing[i]][3]
-            text_padded[i, :text.size(0)] = text
-            f2s_padded[i, :f2.size(0)] = f2
+            t = text[ids_sorted_decreasing[i]]
+            f2_ = f2[ids_sorted_decreasing[i]]
+            a1_ = a1[ids_sorted_decreasing[i]]
+            text_padded[i, :t.size(0)] = t
+            f2s_padded[i, :f2_.size(0)] = f2_
+            a1s_padded[i, :a1_.size(0)] = a1_
 
         # Right zero-pad mel-spec
-        num_mels = batch[0][1].size(0)
-        max_target_len = max([x[1].size(1) for x in batch])
+        num_mels = mel[0].size(0)
+        max_target_len = max([x.size(1) for x in mel])
         if max_target_len % self.n_frames_per_step != 0:
             max_target_len += self.n_frames_per_step - max_target_len % self.n_frames_per_step
             assert max_target_len % self.n_frames_per_step == 0
@@ -120,7 +124,7 @@ class TextMelCollate():
             mel_padded[i, :, :mel.size(1)] = mel
             output_lengths[i] = mel.size(1)
 
-        return text_padded, input_lengths, mel_padded, output_lengths, batch[2], f2s_padded
+        return text_padded, input_lengths, mel_padded, output_lengths, a1s_padded, f2s_padded
 
 
 """Multi speaker version"""
