@@ -198,6 +198,7 @@ class FlowSpecDecoder(nn.Module):
 class FlowGenerator(nn.Module):
     def __init__(self,
                  n_vocab,
+                 n_accent,
                  hidden_channels,
                  filter_channels,
                  filter_channels_dp,
@@ -226,6 +227,7 @@ class FlowGenerator(nn.Module):
 
         super().__init__()
         self.n_vocab = n_vocab
+        self.n_accent = n_accent
         self.hidden_channels = hidden_channels
         self.filter_channels = filter_channels
         self.filter_channels_dp = filter_channels_dp
@@ -253,6 +255,7 @@ class FlowGenerator(nn.Module):
 
         self.encoder = TextEncoder(
             n_vocab,
+            n_accent,
             out_channels,
             hidden_channels_enc or hidden_channels,
             filter_channels,

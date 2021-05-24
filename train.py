@@ -63,6 +63,7 @@ def train_and_eval(rank, n_gpus, hps):
 
     generator = models.FlowGenerator(
         n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
+        n_accent=hps.data.n_accent,
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda(rank)
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
@@ -70,7 +71,7 @@ def train_and_eval(rank, n_gpus, hps):
                                lr=hps.train.learning_rate, betas=hps.train.betas, eps=hps.train.eps)
     if hps.train.fp16_run:
         generator, optimizer_g._optim = amp.initialize(generator, optimizer_g._optim, opt_level="O1")
-    # generator = DDP(generator)
+    generator = DDP(generator)
     epoch_str = 1
     global_step = 0
     try:
