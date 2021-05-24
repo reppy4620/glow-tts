@@ -35,10 +35,10 @@ class TextMelLoader(torch.utils.data.Dataset):
 
     def get_mel_text_pair(self, audiopath_and_text):
         # separate filename and text
-        audiopath, text = audiopath_and_text[0], audiopath_and_text[1]
+        audiopath, *text = audiopath_and_text
         text = self.get_text(text)
         mel = self.get_mel(audiopath)
-        return (text, mel)
+        return text, mel
 
     def get_mel(self, filename):
         if not self.load_mel_from_disk:
@@ -61,12 +61,14 @@ class TextMelLoader(torch.utils.data.Dataset):
         return melspec
 
     def get_text(self, text):
-        text_norm = self.cleaner(text)
+        text_norm, a1s, f2s = self.cleaner(*text)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm,
                                             len(self.cleaner))  # add a blank token, whose id number is len(symbols)
-        text_norm = torch.IntTensor(text_norm)
-        return text_norm
+        text_norm = torch.LongTensor(text_norm)
+        a1s = torch.FloatTensor(a1s)
+        f2s = torch.LongTensor(f2s)
+        return text_norm, a1s, f2s
 
     def __getitem__(self, index):
         return self.get_mel_text_pair(self.audiopaths_and_text[index])
@@ -86,7 +88,7 @@ class TextMelCollate():
         """Collate's training batch from normalized text and mel-spectrogram
         PARAMS
         ------
-        batch: [text_normalized, mel_normalized]
+        batch: [text_normalized, mel_normalized, a2s, f2s]
         """
         # Right zero-pad all one-hot text sequences to max input length
         input_lengths, ids_sorted_decreasing = torch.sort(
@@ -94,11 +96,13 @@ class TextMelCollate():
             dim=0, descending=True)
         max_input_len = input_lengths[0]
 
-        text_padded = torch.LongTensor(len(batch), max_input_len)
-        text_padded.zero_()
+        text_padded = torch.zeros(len(batch), max_input_len)
+        f2s_padded = torch.zeros(len(batch), max_input_len)
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
+            f2 = batch[ids_sorted_decreasing[i]][3]
             text_padded[i, :text.size(0)] = text
+            f2s_padded[i, :f2.size(0)] = f2
 
         # Right zero-pad mel-spec
         num_mels = batch[0][1].size(0)
@@ -116,7 +120,7 @@ class TextMelCollate():
             mel_padded[i, :, :mel.size(1)] = mel
             output_lengths[i] = mel.size(1)
 
-        return text_padded, input_lengths, mel_padded, output_lengths
+        return text_padded, input_lengths, mel_padded, output_lengths, batch[2], f2s_padded
 
 
 """Multi speaker version"""

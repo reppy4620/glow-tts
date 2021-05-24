@@ -25,5 +25,5 @@ python setup.py build_ext --inplace
 cd ..
 
 # run training script
-python init.py -c ./configs/base.json -m /content/drive/MyDrive/logs-jp/base
-python train.py -c ./configs/base.json -m /content/drive/MyDrive/logs-jp/base
+python init.py -c ./configs/base.json -m /content/drive/MyDrive/logs-jp/add_info
+python train.py -c ./configs/base.json -m /content/drive/MyDrive/logs-jp/add_info
