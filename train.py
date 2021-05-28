@@ -89,7 +89,7 @@ def train_and_eval(rank, n_gpus, hps):
         if rank == 0:
             train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer)
             evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval)
-            if epoch % 100 == 0:
+            if epoch % 20 == 0:
                 utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
         else:
@@ -131,7 +131,7 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer
                 (y_gen, *_), *_ = generator.module(x[:1], x_lengths[:1], a1[:1], f2[:1], gen=True)
                 logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(x), len(train_loader.dataset),
-                           100. * batch_idx / len(train_loader),
+                    100. * batch_idx / len(train_loader),
                     loss_g.item()))
                 logger.info([x.item() for x in loss_gs] + [global_step, optimizer_g.get_lr()])
 
