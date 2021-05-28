@@ -1,8 +1,5 @@
-# install for mecab
-apt-get install -y swig mecab libmecab-dev mecab-ipadic-utf8 git make curl xz-utils file
-
 # install modules for cleaning text
-pip install unidecode mecab-python3==0.996.2 unidic jaconv zenhan pykakasi torchaudio
+pip install  torchaudio
 
 # install apex
 git clone --recursive https://github.com/NVIDIA/apex.git
