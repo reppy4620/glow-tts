@@ -99,7 +99,7 @@ class TextEncoder(nn.Module):
 
     def forward(self, x, a1s, f2s, x_lengths, g=None):
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
-        accent_emb = self.f2_emb(f2s) # * math.sqrt(self.hidden_channels)
+        accent_emb = self.f2_emb(f2s)  # * math.sqrt(self.hidden_channels)
         # x += self.proj_a(a1s.unsqueeze(-1))
         x = torch.zeros(token_emb.size(0), token_emb.size(1) * 3, token_emb.size(2), device=token_emb.device)
         x[:, 0::3, :] = token_emb
