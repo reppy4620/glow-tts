@@ -76,7 +76,9 @@ class TextEncoder(nn.Module):
         self.emb = nn.Embedding(n_vocab, hidden_channels)
         self.f2_emb = nn.Embedding(n_accent, hidden_channels)
         nn.init.normal_(self.emb.weight, 0.0, hidden_channels ** -0.5)
-        # self.proj_a = nn.Linear(1, hidden_channels)
+        self.proj_a = nn.Linear(1, hidden_channels)
+
+        hidden_channels *= 3
 
         if prenet:
             self.pre = modules.ConvReluNorm(hidden_channels, hidden_channels, hidden_channels, kernel_size=5,
@@ -100,13 +102,10 @@ class TextEncoder(nn.Module):
     def forward(self, x, a1s, f2s, x_lengths, g=None):
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
         accent_emb = self.f2_emb(f2s)  # * math.sqrt(self.hidden_channels)
-        # x += self.proj_a(a1s.unsqueeze(-1))
-        x = torch.zeros(token_emb.size(0), token_emb.size(1) * 3, token_emb.size(2), device=token_emb.device)
-        x[:, 0::3, :] = token_emb
-        x[:, 1::3, :] = accent_emb
-        x[:, 2::3, :] = a1s.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
+        accent_distance = self.proj_a(a1s.unsqueeze(-1))
+        x = torch.cat([token_emb, accent_emb, accent_distance], dim=-1)
         x = x.transpose(1, -1)  # [b, h, t]
-        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths * 3, x.size(2)), 1).to(x.dtype)
+        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths, x.size(2)), 1).to(x.dtype)
         # print(x.size(), x_mask.size())
 
         if self.prenet:
