@@ -61,7 +61,11 @@ class AudioProcessor(PreProcessor):
 
 
 if __name__ == '__main__':
-    torchaudio.set_audio_backend('sox_io')
+    try:
+        torchaudio.set_audio_backend('sox_io')
+    except RuntimeError:
+        torchaudio.USE_SOUNDFILE_LEGACY_INTERFACE = False
+        torchaudio.set_audio_backend('soundfile')
     parser = argparse.ArgumentParser()
     parser.add_argument('--wav_dir', type=str, required=True)
     parser.add_argument('--wav_output_dir', type=str, required=True)
