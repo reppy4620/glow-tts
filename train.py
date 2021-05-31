@@ -4,7 +4,6 @@ import torch
 
 from accelerate import Accelerator
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 
 import utils
 import models
@@ -26,14 +25,12 @@ def main():
 
 
 def train_and_eval(hps):
-    global global_step, accelerator
+    global global_step
 
     if accelerator.is_main_process:
         logger = utils.get_logger(hps.model_dir)
         logger.info(hps)
         utils.check_git_hash(hps.model_dir)
-        writer = SummaryWriter(log_dir=hps.model_dir)
-        writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
 
     torch.manual_seed(hps.train.seed)
 
@@ -75,8 +72,8 @@ def train_and_eval(hps):
 
     for epoch in range(epoch_str, hps.train.epochs + 1):
         if accelerator.is_main_process:
-            train(epoch, hps, generator, optimizer_g, train_loader, logger, writer)
-            evaluate(epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval)
+            train(epoch, hps, generator, optimizer_g, train_loader, logger)
+            evaluate(epoch, hps, generator, optimizer_g, val_loader, logger)
             if epoch % 10 == 0:
                 utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
@@ -84,9 +81,8 @@ def train_and_eval(hps):
             train(epoch, hps, generator, optimizer_g, train_loader, None, None)
 
 
-def train(epoch, hps, generator, optimizer_g, train_loader, logger, writer):
-    train_loader.sampler.set_epoch(epoch)
-    global global_step, accelerator
+def train(epoch, hps, generator, optimizer_g, train_loader, logger):
+    global global_step
 
     generator.train()
     for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(train_loader):
@@ -114,26 +110,15 @@ def train(epoch, hps, generator, optimizer_g, train_loader, logger, writer):
                     100. * batch_idx / len(train_loader),
                     loss_g.item()))
                 logger.info([x.item() for x in loss_gs] + [global_step, optimizer_g.get_lr()])
-
-                scalar_dict = {"loss/g/total": loss_g, "learning_rate": optimizer_g.get_lr(), "grad_norm": grad_norm}
-                scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(loss_gs)})
-                utils.summarize(
-                    writer=writer,
-                    global_step=global_step,
-                    images={"y_org": utils.plot_spectrogram_to_numpy(y[0].data.cpu().numpy()),
-                            "y_gen": utils.plot_spectrogram_to_numpy(y_gen[0].data.cpu().numpy()),
-                            "attn": utils.plot_alignment_to_numpy(attn[0, 0].data.cpu().numpy()),
-                            },
-                    scalars=scalar_dict)
         global_step += 1
 
     if accelerator.is_main_process:
         logger.info('====> Epoch: {}'.format(epoch))
 
 
-def evaluate(epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval):
+def evaluate(epoch, hps, generator, optimizer_g, val_loader, logger):
     if accelerator.is_main_process:
-        global global_step, accelerator
+        global global_step
         generator.eval()
         losses_tot = []
         with torch.no_grad():
@@ -159,15 +144,6 @@ def evaluate(epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval
                                100. * batch_idx / len(val_loader),
                         loss_g.item()))
                     logger.info([x.item() for x in loss_gs])
-
-        losses_tot = [x / len(val_loader) for x in losses_tot]
-        loss_tot = sum(losses_tot)
-        scalar_dict = {"loss/g/total": loss_tot}
-        scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(losses_tot)})
-        utils.summarize(
-            writer=writer_eval,
-            global_step=global_step,
-            scalars=scalar_dict)
         logger.info('====> Epoch: {}'.format(epoch))
 
 
