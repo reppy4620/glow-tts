@@ -1,11 +1,8 @@
 import os
 
 import torch
-import torch.distributed as dist
-import torch.multiprocessing as mp
 
-from apex import amp
-from apex.parallel import DistributedDataParallel as DDP
+from accelerate import Accelerator
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -16,48 +13,41 @@ from data_utils import TextMelLoader, TextMelCollate
 from text_jp.tokenizer import Tokenizer
 
 global_step = 0
+accelerator = Accelerator()
 
 
 def main():
-    """Assume Single Node Multi GPUs Training Only"""
-    assert torch.cuda.is_available(), "CPU training is not allowed."
 
-    n_gpus = torch.cuda.device_count()
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '80000'
 
     hps = utils.get_hparams()
-    mp.spawn(train_and_eval, nprocs=n_gpus, args=(n_gpus, hps,))
+    train_and_eval(hps)
 
 
-def train_and_eval(rank, n_gpus, hps):
-    global global_step
-    if rank == 0:
+def train_and_eval(hps):
+    global global_step, accelerator
+
+    if accelerator.is_main_process:
         logger = utils.get_logger(hps.model_dir)
         logger.info(hps)
         utils.check_git_hash(hps.model_dir)
         writer = SummaryWriter(log_dir=hps.model_dir)
         writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
 
-    dist.init_process_group(backend='nccl', init_method='env://', world_size=n_gpus, rank=rank)
     torch.manual_seed(hps.train.seed)
-    torch.cuda.set_device(rank)
 
     train_dataset = TextMelLoader(hps.data.training_files, hps.data)
-    train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_dataset,
-        num_replicas=n_gpus,
-        rank=rank,
-        shuffle=True)
     collate_fn = TextMelCollate(1)
     train_loader = DataLoader(train_dataset, num_workers=8, shuffle=False,
                               batch_size=hps.train.batch_size, pin_memory=True,
-                              drop_last=True, collate_fn=collate_fn, sampler=train_sampler)
-    if rank == 0:
+                              drop_last=True, collate_fn=collate_fn)
+    if accelerator.is_main_process:
         val_dataset = TextMelLoader(hps.data.validation_files, hps.data)
         val_loader = DataLoader(val_dataset, num_workers=8, shuffle=False,
                                 batch_size=hps.train.batch_size, pin_memory=True,
                                 drop_last=True, collate_fn=collate_fn)
+        val_loader = accelerator.prepare_data_loader(val_loader)
 
     cleaner = Tokenizer()
 
@@ -65,13 +55,11 @@ def train_and_eval(rank, n_gpus, hps):
         n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
         n_accent=hps.data.n_accent,
         out_channels=hps.data.n_mel_channels,
-        **hps.model).cuda(rank)
+        **hps.model)
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
                                dim_model=hps.model.hidden_channels, warmup_steps=hps.train.warmup_steps,
                                lr=hps.train.learning_rate, betas=hps.train.betas, eps=hps.train.eps)
-    if hps.train.fp16_run:
-        generator, optimizer_g._optim = amp.initialize(generator, optimizer_g._optim, opt_level="O1")
-    generator = DDP(generator)
+    generator, optimizer_g, train_loader = accelerator.prepare(generator, optimizer_g, train_loader)
     epoch_str = 1
     global_step = 0
     try:
@@ -86,25 +74,22 @@ def train_and_eval(rank, n_gpus, hps):
             _ = utils.load_checkpoint(os.path.join(hps.model_dir, "ddi_G.pth"), generator, optimizer_g)
 
     for epoch in range(epoch_str, hps.train.epochs + 1):
-        if rank == 0:
-            train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer)
-            evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval)
-            if epoch % 20 == 0:
+        if accelerator.is_main_process:
+            train(epoch, hps, generator, optimizer_g, train_loader, logger, writer)
+            evaluate(epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval)
+            if epoch % 10 == 0:
                 utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
         else:
-            train(rank, epoch, hps, generator, optimizer_g, train_loader, None, None)
+            train(epoch, hps, generator, optimizer_g, train_loader, None, None)
 
 
-def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer):
+def train(epoch, hps, generator, optimizer_g, train_loader, logger, writer):
     train_loader.sampler.set_epoch(epoch)
-    global global_step
+    global global_step, accelerator
 
     generator.train()
     for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(train_loader):
-        x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
-        y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
-        a1, f2 = a1.cuda(rank, non_blocking=True), f2.cuda(rank, non_blocking=True)
 
         # Train Generator
         optimizer_g.zero_grad()
@@ -117,16 +102,11 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer
         loss_gs = [l_mle, l_length]
         loss_g = sum(loss_gs)
 
-        if hps.train.fp16_run:
-            with amp.scale_loss(loss_g, optimizer_g._optim) as scaled_loss:
-                scaled_loss.backward()
-            grad_norm = commons.clip_grad_value_(amp.master_params(optimizer_g._optim), 5)
-        else:
-            loss_g.backward()
-            grad_norm = commons.clip_grad_value_(generator.parameters(), 5)
+        accelerator.backward(loss_g)
+        grad_norm = commons.clip_grad_value_(generator.parameters(), 5)
         optimizer_g.step()
 
-        if rank == 0:
+        if accelerator.is_main_process:
             if batch_idx % hps.train.log_interval == 0:
                 (y_gen, *_), *_ = generator.module(x[:1], x_lengths[:1], a1[:1], f2[:1], gen=True)
                 logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -147,20 +127,17 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer
                     scalars=scalar_dict)
         global_step += 1
 
-    if rank == 0:
+    if accelerator.is_main_process:
         logger.info('====> Epoch: {}'.format(epoch))
 
 
-def evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval):
-    if rank == 0:
-        global global_step
+def evaluate(epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval):
+    if accelerator.is_main_process:
+        global global_step, accelerator
         generator.eval()
         losses_tot = []
         with torch.no_grad():
             for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(val_loader):
-                x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
-                y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
-                a1, f2 = a1.cuda(rank, non_blocking=True), f2.cuda(rank, non_blocking=True)
 
                 (z, z_m, z_logs, logdet, z_mask), (x_m, x_logs, x_mask), (attn, logw, logw_) = generator(x, x_lengths, a1, f2,
                                                                                                          y, y_lengths,
