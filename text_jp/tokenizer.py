@@ -6,8 +6,9 @@ class Tokenizer:
 
     def __call__(self, phonemes, a1s, f2s, split='_'):
         phonemes = [self.dictionary[s] for s in phonemes.split(split)]
+        a1s = a1s.split(split)
         a1s = [a1s[i + 1] if i == 0 and a1 == 'xx' else a1s[i - 1] if a1 == 'xx' else a1
-               for i, a1 in enumerate(a1s.split(split))]
+               for i, a1 in enumerate(a1s)]
         a1s = [int(a1) / self.a1_coef for a1 in a1s]
         f2s = [self.accent_dict[f2] for f2 in f2s.split(split)]
         return phonemes, a1s, f2s

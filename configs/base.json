@@ -28,7 +28,7 @@
     "mel_fmax": 8000.0,
     "add_noise": true,
     "word_index_path": "filelists/word_index.txt",
-    "n_accent": 17
+    "n_accent": 20
   },
   "model": {
     "hidden_channels": 192,
