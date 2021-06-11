@@ -110,6 +110,7 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger):
         loss_gs = [l_mle, l_length]
         loss_g = sum(loss_gs)
 
+        bar.update()
         bar.set_postfix_str(f'Loss: {loss_g.item():.4f}, MLE: {l_mle.item():.4f}, Duration: {l_length.item():.4f}')
         tracker.update(mle=l_mle.item(), dur=l_length.item(), all=loss_g.item())
 
