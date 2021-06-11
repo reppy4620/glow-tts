@@ -31,6 +31,7 @@
   },
   "model": {
     "n_accent": 19,
+    "state_size": 3,
     "hidden_channels": 192,
     "filter_channels": 768,
     "filter_channels_dp": 256,
