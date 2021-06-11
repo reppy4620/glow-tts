@@ -130,6 +130,7 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger):
                     f'Loss: {tracker.all.mean():.6f}, '
                     f'MLE Loss: {tracker.mle.mean():.6f}, '
                     f'Duration Loss: {tracker.dur.mean():.6f}')
+    bar.close()
 
 
 def evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger):
