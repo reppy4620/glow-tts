@@ -106,7 +106,7 @@ class TextEncoder(nn.Module):
         a1s = a1s.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
         x = torch.cat([token_emb, f2s, a1s], dim=-1)
         x = x.transpose(1, -1)  # [b, h, t]
-        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths * 3, x.size(2)), 1).to(x.dtype)
+        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths, x.size(2)), 1).to(x.dtype)
         # print(x.size(), x_mask.size())
 
         if self.prenet:
