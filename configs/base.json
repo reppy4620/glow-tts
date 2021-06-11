@@ -27,10 +27,10 @@
     "mel_fmin": 0.0,
     "mel_fmax": 8000.0,
     "add_noise": true,
-    "word_index_path": "filelists/word_index.txt",
-    "n_accent": 20
+    "word_index_path": "filelists/word_index.txt"
   },
   "model": {
+    "n_accent": 19,
     "hidden_channels": 192,
     "filter_channels": 768,
     "filter_channels_dp": 256,

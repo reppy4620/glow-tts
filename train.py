@@ -1,21 +1,18 @@
 import os
+from tqdm.auto import tqdm
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-
 from apex import amp
 from apex.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 
-import utils
-import models
 import commons
+import models
+import utils
 from data_utils import TextMelLoader, TextMelCollate
 from text_jp.tokenizer import Tokenizer
-
-global_step = 0
 
 
 def main():
@@ -31,13 +28,9 @@ def main():
 
 
 def train_and_eval(rank, n_gpus, hps):
-    global global_step
     if rank == 0:
         logger = utils.get_logger(hps.model_dir)
         logger.info(hps)
-        utils.check_git_hash(hps.model_dir)
-        writer = SummaryWriter(log_dir=hps.model_dir)
-        writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
 
     dist.init_process_group(backend='nccl', init_method='env://', world_size=n_gpus, rank=rank)
     torch.manual_seed(hps.train.seed)
@@ -62,8 +55,7 @@ def train_and_eval(rank, n_gpus, hps):
     cleaner = Tokenizer()
 
     generator = models.FlowGenerator(
-        n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
-        n_accent=hps.data.n_accent,
+        n_vocab=len(cleaner),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda(rank)
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
@@ -87,8 +79,8 @@ def train_and_eval(rank, n_gpus, hps):
 
     for epoch in range(epoch_str, hps.train.epochs + 1):
         if rank == 0:
-            train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer)
-            evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval)
+            train(rank, epoch, hps, generator, optimizer_g, train_loader, logger)
+            evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger)
             if epoch % 50 == 0:
                 utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
@@ -96,12 +88,13 @@ def train_and_eval(rank, n_gpus, hps):
             train(rank, epoch, hps, generator, optimizer_g, train_loader, None, None)
 
 
-def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer):
+def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger):
     train_loader.sampler.set_epoch(epoch)
-    global global_step
+    tracker = utils.Tracker()
 
     generator.train()
-    for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(train_loader):
+    bar = tqdm(desc=f'Epoch: {epoch}')
+    for x, x_lengths, y, y_lengths, a1, f2 in train_loader:
         x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
         y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
         a1, f2 = a1.cuda(rank, non_blocking=True), f2.cuda(rank, non_blocking=True)
@@ -117,6 +110,9 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer
         loss_gs = [l_mle, l_length]
         loss_g = sum(loss_gs)
 
+        bar.set_postfix_str(f'Loss: {loss_g.item():.4f}, MLE: {l_mle.item():.4f}, Duration: {l_length.item():.4f}')
+        tracker.update(mle=l_mle.item(), dur=l_length.item(), all=loss_g.item())
+
         if hps.train.fp16_run:
             with amp.scale_loss(loss_g, optimizer_g._optim) as scaled_loss:
                 scaled_loss.backward()
@@ -126,36 +122,19 @@ def train(rank, epoch, hps, generator, optimizer_g, train_loader, logger, writer
             grad_norm = commons.clip_grad_value_(generator.parameters(), 5)
         optimizer_g.step()
 
-        if rank == 0:
-            if batch_idx % hps.train.log_interval == 0:
-                (y_gen, *_), *_ = generator.module(x[:1], x_lengths[:1], a1[:1], f2[:1], gen=True)
-                logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(x), len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader),
-                    loss_g.item()))
-                logger.info([x.item() for x in loss_gs] + [global_step, optimizer_g.get_lr()])
-
-                scalar_dict = {"loss/g/total": loss_g, "learning_rate": optimizer_g.get_lr(), "grad_norm": grad_norm}
-                scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(loss_gs)})
-                utils.summarize(
-                    writer=writer,
-                    global_step=global_step,
-                    images={"y_org": utils.plot_spectrogram_to_numpy(y[0].data.cpu().numpy()),
-                            "y_gen": utils.plot_spectrogram_to_numpy(y_gen[0].data.cpu().numpy()),
-                            "attn": utils.plot_alignment_to_numpy(attn[0, 0].data.cpu().numpy()),
-                            },
-                    scalars=scalar_dict)
-        global_step += 1
+        tracker.update(mle=l_mle.item(), dur=l_length.item(), all=loss_g.item())
 
     if rank == 0:
-        logger.info('====> Epoch: {}'.format(epoch))
+        logger.info(f'Train Epoch: {epoch}, '
+                    f'Loss: {tracker.all.mean():.6f}, '
+                    f'MLE Loss: {tracker.mle.mean():.6f}, '
+                    f'Duration Loss: {tracker.dur.mean():.6f}')
 
 
-def evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, writer_eval):
+def evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger):
     if rank == 0:
-        global global_step
         generator.eval()
-        losses_tot = []
+        tracker = utils.Tracker()
         with torch.no_grad():
             for batch_idx, (x, x_lengths, y, y_lengths, a1, f2) in enumerate(val_loader):
                 x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
@@ -171,27 +150,11 @@ def evaluate(rank, epoch, hps, generator, optimizer_g, val_loader, logger, write
                 loss_gs = [l_mle, l_length]
                 loss_g = sum(loss_gs)
 
-                if batch_idx == 0:
-                    losses_tot = loss_gs
-                else:
-                    losses_tot = [x + y for (x, y) in zip(losses_tot, loss_gs)]
-
-                if batch_idx % hps.train.log_interval == 0:
-                    logger.info('Eval Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                        epoch, batch_idx * len(x), len(val_loader.dataset),
-                               100. * batch_idx / len(val_loader),
-                        loss_g.item()))
-                    logger.info([x.item() for x in loss_gs])
-
-        losses_tot = [x / len(val_loader) for x in losses_tot]
-        loss_tot = sum(losses_tot)
-        scalar_dict = {"loss/g/total": loss_tot}
-        scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(losses_tot)})
-        utils.summarize(
-            writer=writer_eval,
-            global_step=global_step,
-            scalars=scalar_dict)
-        logger.info('====> Epoch: {}'.format(epoch))
+                tracker.update(mle=l_mle.item(), dur=l_length.item(), all=loss_g.item())
+        logger.info(f'Eval Epoch: {epoch}, '
+                    f'Loss: {tracker.all.mean():.6f}, '
+                    f'MLE Loss: {tracker.mle.mean():.6f}, '
+                    f'Duration Loss: {tracker.dur.mean():.6f}')
 
 
 if __name__ == "__main__":
