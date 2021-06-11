@@ -101,9 +101,6 @@ class TextEncoder(nn.Module):
         self.proj_w = DurationPredictor(hidden_channels + gin_channels, filter_channels_dp, kernel_size, p_dropout)
 
     def forward(self, x, a1s, f2s, x_lengths, g=None):
-        if self.state_size > 1:
-            a1s = torch.repeat_interleave(a1s, repeats=self.state_size, dim=1)
-            f2s = torch.repeat_interleave(f2s, repeats=self.state_size, dim=1)
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
         f2s = self.f2_emb(f2s)  # * math.sqrt(self.hidden_channels)
         a1s = a1s.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
