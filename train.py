@@ -52,10 +52,9 @@ def train_and_eval(rank, n_gpus, hps):
                                 batch_size=hps.train.batch_size, pin_memory=True,
                                 drop_last=True, collate_fn=collate_fn)
 
-    cleaner = Tokenizer()
-
+    tokenizer = Tokenizer(state_size=hps.model.state_size)
     generator = models.FlowGenerator(
-        n_vocab=len(cleaner),
+        n_vocab=len(tokenizer),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda(rank)
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
@@ -65,14 +64,12 @@ def train_and_eval(rank, n_gpus, hps):
         generator, optimizer_g._optim = amp.initialize(generator, optimizer_g._optim, opt_level="O1")
     generator = DDP(generator)
     epoch_str = 1
-    global_step = 0
     try:
         _, _, _, epoch_str = utils.load_checkpoint(utils.latest_checkpoint_path(hps.model_dir, "G_*.pth"), generator,
                                                    optimizer_g)
         epoch_str += 1
         optimizer_g.step_num = (epoch_str - 1) * len(train_loader)
         optimizer_g._update_learning_rate()
-        global_step = (epoch_str - 1) * len(train_loader)
     except:
         if hps.train.ddi and os.path.isfile(os.path.join(hps.model_dir, "ddi_G.pth")):
             _ = utils.load_checkpoint(os.path.join(hps.model_dir, "ddi_G.pth"), generator, optimizer_g)

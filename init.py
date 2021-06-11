@@ -33,10 +33,10 @@ def main():
     train_loader = DataLoader(train_dataset, num_workers=8, shuffle=True,
                               batch_size=hps.train.batch_size, pin_memory=True,
                               drop_last=True, collate_fn=collate_fn)
-    cleaner = Tokenizer()
+    tokenizer = Tokenizer(state_size=hps.model.state_size)
 
     generator = FlowGenerator_DDI(
-        n_vocab=len(cleaner),
+        n_vocab=len(tokenizer),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda()
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,

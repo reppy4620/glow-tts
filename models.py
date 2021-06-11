@@ -75,7 +75,7 @@ class TextEncoder(nn.Module):
         self.prenet = prenet
         self.gin_channels = gin_channels
 
-        self.emb = nn.Embedding(n_vocab, hidden_channels)
+        self.emb = nn.Embedding(n_vocab*3, hidden_channels)
         self.f2_emb = nn.Embedding(n_accent, hidden_channels)
         nn.init.normal_(self.emb.weight, 0.0, hidden_channels ** -0.5)
 
@@ -102,7 +102,6 @@ class TextEncoder(nn.Module):
 
     def forward(self, x, a1s, f2s, x_lengths, g=None):
         if self.state_size > 1:
-            x = torch.repeat_interleave(x, repeats=self.state_size, dim=1)
             a1s = torch.repeat_interleave(a1s, repeats=self.state_size, dim=1)
             f2s = torch.repeat_interleave(f2s, repeats=self.state_size, dim=1)
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]

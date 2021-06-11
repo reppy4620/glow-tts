@@ -1,11 +1,14 @@
 class Tokenizer:
-    def __init__(self, dictionary_path='./filelists/word_index.txt'):
+    def __init__(self, dictionary_path='./filelists/word_index.txt', state_size=3):
         self.a1_coef = 15
+        self.state_size = state_size
         self.dictionary = self.load_dictionary(dictionary_path)
         self.accent_dict = self.build_accent_dict()
 
     def __call__(self, phonemes, a1s, f2s, split='_'):
-        phonemes = [self.dictionary[s] for s in phonemes.split(split)]
+        phonemes = [[self.dictionary[s]+len(self.dictionary)*i for i in range(self.state_size)]
+                    for s in phonemes.split(split)]
+        phonemes = sum(phonemes, [])
         a1s = a1s.split(split)
         a1s = [a1s[i + 1] if i == 0 and a1 == 'xx' else a1s[i - 1] if a1 == 'xx' else a1
                for i, a1 in enumerate(a1s)]
