@@ -36,8 +36,7 @@ def main():
     cleaner = Tokenizer()
 
     generator = FlowGenerator_DDI(
-        n_vocab=len(cleaner) + getattr(hps.data, "add_blank", False),
-        n_accent=hps.data.n_accent,
+        n_vocab=len(cleaner),
         out_channels=hps.data.n_mel_channels,
         **hps.model).cuda()
     optimizer_g = commons.Adam(generator.parameters(), scheduler=hps.train.scheduler,
