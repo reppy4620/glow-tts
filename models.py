@@ -79,6 +79,8 @@ class TextEncoder(nn.Module):
         self.f2_emb = nn.Embedding(n_accent, hidden_channels)
         nn.init.normal_(self.emb.weight, 0.0, hidden_channels ** -0.5)
 
+        hidden_channels *= 3
+
         if prenet:
             self.pre = modules.ConvReluNorm(hidden_channels, hidden_channels, hidden_channels, kernel_size=5,
                                             n_layers=3, p_dropout=0.5)
