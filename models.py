@@ -51,6 +51,7 @@ class TextEncoder(nn.Module):
                  n_layers,
                  kernel_size,
                  p_dropout,
+                 p_dropout_dur,
                  window_size=None,
                  block_length=None,
                  mean_only=False,
@@ -69,6 +70,7 @@ class TextEncoder(nn.Module):
         self.n_layers = n_layers
         self.kernel_size = kernel_size
         self.p_dropout = p_dropout
+        self.p_dropout_dur = p_dropout_dur
         self.window_size = window_size
         self.block_length = block_length
         self.mean_only = mean_only
@@ -98,7 +100,7 @@ class TextEncoder(nn.Module):
         self.proj_m = nn.Conv1d(hidden_channels, out_channels, 1)
         if not mean_only:
             self.proj_s = nn.Conv1d(hidden_channels, out_channels, 1)
-        self.proj_w = DurationPredictor(hidden_channels + gin_channels, filter_channels_dp, kernel_size, p_dropout)
+        self.proj_w = DurationPredictor(hidden_channels + gin_channels, filter_channels_dp, kernel_size, p_dropout_dur)
 
     def forward(self, x, a1s, f2s, x_lengths, g=None):
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
@@ -209,6 +211,7 @@ class FlowGenerator(nn.Module):
                  n_heads=2,
                  n_layers_enc=6,
                  p_dropout=0.,
+                 p_dropout_dur=0.,
                  n_blocks_dec=12,
                  kernel_size_dec=5,
                  dilation_rate=5,
@@ -239,6 +242,7 @@ class FlowGenerator(nn.Module):
         self.n_heads = n_heads
         self.n_layers_enc = n_layers_enc
         self.p_dropout = p_dropout
+        self.p_dropout_dur = p_dropout_dur
         self.n_blocks_dec = n_blocks_dec
         self.kernel_size_dec = kernel_size_dec
         self.dilation_rate = dilation_rate
@@ -268,6 +272,7 @@ class FlowGenerator(nn.Module):
             n_layers_enc,
             kernel_size,
             p_dropout,
+            p_dropout_dur,
             window_size=window_size,
             block_length=block_length,
             mean_only=mean_only,

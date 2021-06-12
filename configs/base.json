@@ -37,6 +37,7 @@
     "filter_channels_dp": 256,
     "kernel_size": 3,
     "p_dropout": 0.1,
+    "p_dropout_dur": 0.5,
     "n_blocks_dec": 12,
     "n_layers_enc": 6,
     "n_heads": 2,
