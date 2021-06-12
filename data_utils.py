@@ -23,7 +23,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         self.load_mel_from_disk = hparams.load_mel_from_disk
         self.add_noise = hparams.add_noise
         self.add_blank = getattr(hparams, "add_blank", False)  # improved version
-        self.cleaner = Tokenizer()
+        self.cleaner = Tokenizer(state_size=hparams.model.state_size)
         # if getattr(hparams, "cmudict_path", None) is not None:
         #     self.cmudict = cmudict.CMUDict(hparams.cmudict_path)
         self.stft = commons.TacotronSTFT(

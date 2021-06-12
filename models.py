@@ -42,7 +42,6 @@ class TextEncoder(nn.Module):
     def __init__(self,
                  n_vocab,
                  n_accent,
-                 state_size,
                  out_channels,
                  hidden_channels,
                  filter_channels,
@@ -60,7 +59,6 @@ class TextEncoder(nn.Module):
         super().__init__()
 
         self.n_vocab = n_vocab
-        self.state_size = state_size
         self.out_channels = out_channels
         self.hidden_channels = hidden_channels
         self.filter_channels = filter_channels
@@ -101,16 +99,12 @@ class TextEncoder(nn.Module):
         self.proj_w = DurationPredictor(hidden_channels + gin_channels, filter_channels_dp, kernel_size, p_dropout)
 
     def forward(self, x, a1s, f2s, x_lengths, g=None):
-        if self.state_size > 1:
-            x = torch.repeat_interleave(x, repeats=self.state_size, dim=1)
-            a1s = torch.repeat_interleave(a1s, repeats=self.state_size, dim=1)
-            f2s = torch.repeat_interleave(f2s, repeats=self.state_size, dim=1)
         token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
         f2s = self.f2_emb(f2s)  # * math.sqrt(self.hidden_channels)
         a1s = a1s.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
         x = torch.cat([token_emb, f2s, a1s], dim=-1)
         x = x.transpose(1, -1)  # [b, h, t]
-        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths * 3, x.size(2)), 1).to(x.dtype)
+        x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths, x.size(2)), 1).to(x.dtype)
         # print(x.size(), x_mask.size())
 
         if self.prenet:
@@ -204,7 +198,6 @@ class FlowGenerator(nn.Module):
     def __init__(self,
                  n_vocab,
                  n_accent,
-                 state_size,
                  hidden_channels,
                  filter_channels,
                  filter_channels_dp,
@@ -234,7 +227,6 @@ class FlowGenerator(nn.Module):
         super().__init__()
         self.n_vocab = n_vocab
         self.n_accent = n_accent
-        self.state_size = state_size
         self.hidden_channels = hidden_channels
         self.filter_channels = filter_channels
         self.filter_channels_dp = filter_channels_dp
@@ -263,7 +255,6 @@ class FlowGenerator(nn.Module):
         self.encoder = TextEncoder(
             n_vocab,
             n_accent,
-            state_size,
             out_channels,
             hidden_channels_enc or hidden_channels,
             filter_channels,
