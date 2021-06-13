@@ -2,6 +2,7 @@ import math
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import modules
 import commons
@@ -10,31 +11,40 @@ import monotonic_align
 
 
 class DurationPredictor(nn.Module):
-    def __init__(self, in_channels, filter_channels, kernel_size, p_dropout):
+    def __init__(self, n_vocab, n_accent, channels, p_dropout):
         super().__init__()
 
-        self.in_channels = in_channels
-        self.filter_channels = filter_channels
-        self.kernel_size = kernel_size
+        self.n_vocab = n_vocab
+        self.n_accent = n_accent
+        self.channels = channels
         self.p_dropout = p_dropout
 
-        self.drop = nn.Dropout(p_dropout)
-        self.conv_1 = nn.Conv1d(in_channels, filter_channels, kernel_size, padding=kernel_size // 2)
-        self.norm_1 = attentions.LayerNorm(filter_channels)
-        self.conv_2 = nn.Conv1d(filter_channels, filter_channels, kernel_size, padding=kernel_size // 2)
-        self.norm_2 = attentions.LayerNorm(filter_channels)
-        self.proj = nn.Conv1d(filter_channels, 1, 1)
+        self.phoneme_emb = nn.Embedding(n_vocab*3, channels)
+        self.f2_emb = nn.Embedding(n_accent, channels)
 
-    def forward(self, x, x_mask):
-        x = self.conv_1(x * x_mask)
-        x = torch.relu(x)
-        x = self.norm_1(x)
-        x = self.drop(x)
-        x = self.conv_2(x * x_mask)
-        x = torch.relu(x)
-        x = self.norm_2(x)
-        x = self.drop(x)
-        x = self.proj(x * x_mask)
+        self.lstm = nn.LSTM(
+            channels*3,
+            channels*3,
+            num_layers=3,
+            batch_first=True,
+            dropout=p_dropout,
+            bidirectional=True
+        )
+        self.linear = nn.Linear(channels*3*2, 1)
+
+    def forward(self, phoneme, a1, f2, input_length, g=None):
+        p_emb = self.phoneme_emb(phoneme)
+        f2_emb = self.f2_emb(f2)
+        a1 = a1.unsqueeze(-1).expand(-1, -1, p_emb.size(-1))
+        x = torch.cat([p_emb, f2_emb, a1], dim=-1)
+        x_mask = torch.unsqueeze(commons.sequence_mask(input_length, x.size(1)), -1).to(x.dtype)
+        if g is not None:
+            x = torch.cat([x, g.expand(-1, x.size(1), -1)])
+        x *= x_mask
+        x = pack_padded_sequence(x, input_length.cpu(), batch_first=True)
+        x, _ = self.lstm(x)
+        x, _ = pad_packed_sequence(x, batch_first=True)
+        x = self.linear(x)
         return x * x_mask
 
 
@@ -51,6 +61,7 @@ class TextEncoder(nn.Module):
                  n_layers,
                  kernel_size,
                  p_dropout,
+                 p_dropout_dur,
                  window_size=None,
                  block_length=None,
                  mean_only=False,
@@ -69,6 +80,7 @@ class TextEncoder(nn.Module):
         self.n_layers = n_layers
         self.kernel_size = kernel_size
         self.p_dropout = p_dropout
+        self.p_dropout_dur = p_dropout_dur
         self.window_size = window_size
         self.block_length = block_length
         self.mean_only = mean_only
@@ -98,26 +110,20 @@ class TextEncoder(nn.Module):
         self.proj_m = nn.Conv1d(hidden_channels, out_channels, 1)
         if not mean_only:
             self.proj_s = nn.Conv1d(hidden_channels, out_channels, 1)
-        self.proj_w = DurationPredictor(hidden_channels + gin_channels, filter_channels_dp, kernel_size, p_dropout)
 
-    def forward(self, x, a1s, f2s, x_lengths, g=None):
-        token_emb = self.emb(x) * math.sqrt(self.hidden_channels)  # [b, t, h]
-        f2s = self.f2_emb(f2s)  # * math.sqrt(self.hidden_channels)
-        a1s = a1s.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
-        x = torch.cat([token_emb, f2s, a1s], dim=-1)
+        self.dp = DurationPredictor(n_vocab, n_accent, hidden_channels//3+gin_channels, p_dropout_dur)
+
+    def forward(self, phoneme, a1, f2, x_lengths, g=None):
+        token_emb = self.emb(phoneme) * math.sqrt(self.hidden_channels)  # [b, t, h]
+        f2s = self.f2_emb(f2)  # * math.sqrt(self.hidden_channels)
+        a1_expanded = a1.unsqueeze(-1).expand(-1, -1, token_emb.size(-1))
+        x = torch.cat([token_emb, f2s, a1_expanded], dim=-1)
         x = x.transpose(1, -1)  # [b, h, t]
         x_mask = torch.unsqueeze(commons.sequence_mask(x_lengths, x.size(2)), 1).to(x.dtype)
-        # print(x.size(), x_mask.size())
 
         if self.prenet:
             x = self.pre(x, x_mask)
         x = self.encoder(x, x_mask)
-
-        if g is not None:
-            g_exp = g.expand(-1, -1, x.size(-1))
-            x_dp = torch.cat([torch.detach(x), g_exp], 1)
-        else:
-            x_dp = torch.detach(x)
 
         x_m = self.proj_m(x) * x_mask
         if not self.mean_only:
@@ -125,7 +131,7 @@ class TextEncoder(nn.Module):
         else:
             x_logs = torch.zeros_like(x_m)
 
-        logw = self.proj_w(x_dp, x_mask)
+        logw = self.dp(phoneme, a1, f2, x_lengths, g=g)
         return x_m, x_logs, logw, x_mask
 
 
@@ -209,6 +215,7 @@ class FlowGenerator(nn.Module):
                  n_heads=2,
                  n_layers_enc=6,
                  p_dropout=0.,
+                 p_dropout_dur=0.,
                  n_blocks_dec=12,
                  kernel_size_dec=5,
                  dilation_rate=5,
@@ -239,6 +246,7 @@ class FlowGenerator(nn.Module):
         self.n_heads = n_heads
         self.n_layers_enc = n_layers_enc
         self.p_dropout = p_dropout
+        self.p_dropout_dur = p_dropout_dur
         self.n_blocks_dec = n_blocks_dec
         self.kernel_size_dec = kernel_size_dec
         self.dilation_rate = dilation_rate
@@ -268,6 +276,7 @@ class FlowGenerator(nn.Module):
             n_layers_enc,
             kernel_size,
             p_dropout,
+            p_dropout_dur,
             window_size=window_size,
             block_length=block_length,
             mean_only=mean_only,
